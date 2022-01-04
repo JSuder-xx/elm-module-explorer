@@ -1,0 +1,67 @@
+{
+    "name": "elm-type-explorer",
+    "displayName": "Elm Type Explorer",
+    "description": "Visualize functions related to types declared in the current Elm file.",
+    "version": "0.0.1",
+	"author": {
+		"name": "John Suder",
+		"email": "j.j.suder@gmail.com",
+		"url": "https://jsuder-xx.github.io/"
+	},
+    "engines": {
+        "vscode": "^1.42.0"
+    },
+	"activationEvents": [
+		"onView:elmTypeExplorer",
+        "onLanguage:elm"
+    ],        	
+	"main": "./out/extension.js",
+	"contributes": {
+		"views": {
+			"explorer": [
+				{
+					"id": "elmTypeExplorer",
+					"name": "Elm Type Explorer",
+					"when": "elmTypeExplorerEnabled"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "elmTypeExplorer.refresh",
+				"title": "Refresh"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "elmTypeExplorer.refresh",
+					"when": "view == elmTypeExplorer",
+					"group": "navigation"
+				}
+			]
+		},
+		"configuration": [
+			{
+				"title": "Elm Type Explorer",
+				"properties": {
+					"elmTypeExplorer.autorefresh": {
+						"type": "boolean",
+						"default": true
+					}
+				}
+			}
+		]
+	},
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^10.12.21",
+        "@types/vscode": "^1.42.0",
+        "tslint": "^5.12.1",
+        "typescript": "^4.5.4"
+    }
+}
