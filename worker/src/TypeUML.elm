@@ -12,9 +12,9 @@ type alias FunctionUML =
 type alias TypeUML =
     { name : String
     , lineNumber : Int
-    , returnedBy : List FunctionUML
-    , projectionsOf : List FunctionUML
-    , updaters : List FunctionUML
+    , inOutput : List FunctionUML
+    , inInput : List FunctionUML
+    , inInputAndOutput : List FunctionUML
     , referencedBy : List FunctionUML
     }
 
@@ -23,26 +23,26 @@ init : String -> Range -> TypeUML
 init name range =
     { name = name
     , lineNumber = range.start.row
-    , returnedBy = []
-    , projectionsOf = []
-    , updaters = []
+    , inOutput = []
+    , inInput = []
+    , inInputAndOutput = []
     , referencedBy = []
     }
 
 
 includeReturnedBy : FunctionUML -> TypeUML -> TypeUML
 includeReturnedBy f typeUML =
-    { typeUML | returnedBy = f :: typeUML.returnedBy }
+    { typeUML | inOutput = f :: typeUML.inOutput }
 
 
 includeProjectionsOf : FunctionUML -> TypeUML -> TypeUML
 includeProjectionsOf f typeUML =
-    { typeUML | projectionsOf = f :: typeUML.projectionsOf }
+    { typeUML | inInput = f :: typeUML.inInput }
 
 
 includeUpdaters : FunctionUML -> TypeUML -> TypeUML
 includeUpdaters f typeUML =
-    { typeUML | updaters = f :: typeUML.updaters }
+    { typeUML | inInputAndOutput = f :: typeUML.inInputAndOutput }
 
 
 includeReferencedBy : FunctionUML -> TypeUML -> TypeUML

@@ -14,9 +14,9 @@ type FunctionUML = {
 type TypeUML = {
     name: string
     , lineNumber: number
-    , returnedBy: FunctionUML[]
-    , projectionsOf: FunctionUML[]
-    , updaters: FunctionUML[]
+    , inOutput: FunctionUML[]
+    , inInput: FunctionUML[]
+    , inInputAndOutput: FunctionUML[]
     , referencedBy: FunctionUML[]
 }
 type ModuleUML = { name: string, types: TypeUML[] }
@@ -25,9 +25,10 @@ export const extensionName = 'elmTypeExplorer'
 
 type Node = vscode.TreeItem & { children?: Node[] }
 
-const functionUMLToNode = (functionUML: FunctionUML): Node =>
+const functionUMLToNode = (iconPath: string) => (functionUML: FunctionUML): Node =>
 ({
     label: `${functionUML.name} : ${functionUML.typeAnnotation}`,
+    iconPath: new vscode.ThemeIcon(iconPath),
     command: {
         command: 'revealLine',
         title: 'Goto',
@@ -38,31 +39,27 @@ const functionUMLToNode = (functionUML: FunctionUML): Node =>
     }
 });
 
-const functionKinds = (label: string, functionUMLList: FunctionUML[]): Node[] =>
-    functionUMLList.length === 0 ?
-        [] :
-        [{
-            label,
-            collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-            children: functionUMLList.map(functionUMLToNode)
-        }];
+const functionKinds = (icon: string, functionUMLList: FunctionUML[]): Node[] =>
+    functionUMLList.map(functionUMLToNode(icon));
 
-const typeUMLToNode = (typeUML: TypeUML): Node => {
-    const anyChildren = typeUML.returnedBy.length > 0
-        || typeUML.updaters.length > 0
-        || typeUML.projectionsOf.length > 0
-        || typeUML.referencedBy.length > 0;
-    return {
-        label: typeUML.name,
-        collapsibleState: anyChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
-        children: [
-            ...functionKinds('Return', typeUML.returnedBy),
-            ...functionKinds('Update', typeUML.updaters),
-            ...functionKinds('Project', typeUML.projectionsOf),
-            ...functionKinds('Mention', typeUML.referencedBy)
-        ]
-    };
-}
+
+const typeHasChildren = (typeUML: TypeUML): boolean =>
+    typeUML.inOutput.length > 0
+    || typeUML.inInputAndOutput.length > 0
+    || typeUML.inInput.length > 0
+    || typeUML.referencedBy.length > 0;
+
+const typeUMLToNode = (typeUML: TypeUML): Node =>
+({
+    label: typeUML.name,
+    collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+    children: [
+        ...functionKinds('arrow-right', typeUML.inOutput),
+        ...functionKinds('arrow-both', typeUML.inInputAndOutput),
+        ...functionKinds('arrow-left', typeUML.inInput),
+        ...functionKinds('eye', typeUML.referencedBy)
+    ]
+});
 
 export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
 
@@ -81,12 +78,12 @@ export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
         vscode.workspace.onDidChangeConfiguration(() => {
             this.autoRefresh = vscode.workspace.getConfiguration(extensionName).get('autorefresh');
         });
-        this.onActiveEditorChanged();
-
         main.ports.sendModule.subscribe((module: ModuleUML) => {
             this.moduleUML = module;
             this._onDidChangeTreeData.fire(undefined);
         });
+
+        this.onActiveEditorChanged();
     }
 
     refresh(): void {
@@ -130,7 +127,7 @@ export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
                 ? element.children
                 : (!moduleUML)
                     ? []
-                    : moduleUML.types.map(typeUMLToNode)
+                    : moduleUML.types.filter(typeHasChildren).map(typeUMLToNode)
         );
     }
 
