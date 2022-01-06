@@ -10,12 +10,13 @@ import Elm.Syntax.Module as Module
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Function
 import Set
-import TypeUML exposing (TypeUML)
+import TypeUML exposing (FunctionUML, TypeUML)
 
 
 type alias ModuleUML =
     { name : String
     , types : List TypeUML
+    , missingSignatures : List FunctionUML
     }
 
 
@@ -78,6 +79,31 @@ fromFile { moduleDefinition, declarations } =
                         |> List.foldl Set.insert Set.empty
                         |> flip Set.member
 
+        functionWithoutSignature : Node Declaration -> Maybe FunctionUML
+        functionWithoutSignature (Node range functionDeclaration) =
+            case functionDeclaration of
+                FunctionDeclaration { declaration, signature } ->
+                    case signature of
+                        Just _ ->
+                            Nothing
+
+                        Nothing ->
+                            declaration
+                                |> Node.value
+                                |> .name
+                                |> Node.value
+                                |> (\name ->
+                                        Just
+                                            { name = name
+                                            , isExposed = isExposed name
+                                            , lineNumber = range.start.row
+                                            , typeAnnotation = ""
+                                            }
+                                   )
+
+                _ ->
+                    Nothing
+
         initialModuleState : ModuleUMLState
         initialModuleState =
             { name = moduleDef |> Module.moduleName |> String.join "."
@@ -94,6 +120,7 @@ fromFile { moduleDefinition, declarations } =
     in
     { name = moduleAfterFunctions.name
     , types = Dict.values moduleAfterFunctions.declaredTypes
+    , missingSignatures = declarations |> List.filterMap functionWithoutSignature
     }
 
 

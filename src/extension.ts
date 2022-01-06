@@ -20,7 +20,7 @@ type TypeUML = {
     , inInputAndOutput: FunctionUML[]
     , referencedBy: FunctionUML[]
 }
-type ModuleUML = { name: string, types: TypeUML[] }
+type ModuleUML = { name: string, types: TypeUML[], missingSignatures: FunctionUML[] }
 
 export const extensionName = 'elmTypeExplorer'
 
@@ -28,7 +28,7 @@ type Node = vscode.TreeItem & { children?: Node[] }
 
 const functionUMLToNode = (iconPath: string) => (functionUML: FunctionUML): Node =>
 ({
-    label: `${(functionUML.isExposed) ? '+' : '-'}${functionUML.name} : ${functionUML.typeAnnotation}`,
+    label: `${(functionUML.isExposed) ? '+' : '-'}${functionUML.name} ${functionUML.typeAnnotation ? (': ' + functionUML.typeAnnotation) : ''}`,
     iconPath: new vscode.ThemeIcon(iconPath),
     command: {
         command: 'revealLine',
@@ -128,7 +128,15 @@ export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
                 ? element.children
                 : (!moduleUML)
                     ? []
-                    : moduleUML.types.filter(typeHasChildren).map(typeUMLToNode)
+                    : [
+                        ...moduleUML.types.filter(typeHasChildren).map(typeUMLToNode),
+                        ...moduleUML.missingSignatures.length === 0 ? [] :
+                            [{
+                                label: "NO SIGNATURES",
+                                collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+                                children: moduleUML.missingSignatures.map(functionUMLToNode('circle-slash'))
+                            }]
+                    ]
         );
     }
 
