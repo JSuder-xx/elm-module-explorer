@@ -6,7 +6,7 @@ import Set
 
 
 type alias FunctionUML =
-    { name : String, lineNumber : Int, typeAnnotation : String }
+    { name : String, isExposed : Bool, lineNumber : Int, typeAnnotation : String }
 
 
 type alias TypeUML =
@@ -51,10 +51,10 @@ includeReferencedBy f typeUML =
 
 
 addFunction : Function -> String -> TypeUML -> TypeUML
-addFunction { name, lineNumber, typeAnnotation, typeRoles } typeName typeUML =
+addFunction { name, lineNumber, isExposed, typeAnnotation, typeRoles } typeName typeUML =
     let
         functionUML =
-            { name = name, lineNumber = lineNumber, typeAnnotation = typeAnnotation }
+            { name = name, isExposed = isExposed, lineNumber = lineNumber, typeAnnotation = typeAnnotation }
 
         isMemberOf =
             Set.member typeName

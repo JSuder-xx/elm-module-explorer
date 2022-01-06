@@ -118,9 +118,9 @@ suite =
             , test "the single type has expected functions" <|
                 ({ name = "Widget"
                  , lineNumber = 2
-                 , inOutput = [ { name = "makesWidget", lineNumber = 3, typeAnnotation = "String -> Widget" } ]
-                 , inInput = [ { name = "projectsWidget", lineNumber = 5, typeAnnotation = "Widget -> String" } ]
-                 , inInputAndOutput = [ { name = "updatesWidget", lineNumber = 7, typeAnnotation = "String -> (Widget -> Widget)" } ]
+                 , inOutput = [ { name = "makesWidget", isExposed = True, lineNumber = 3, typeAnnotation = "String -> Widget" } ]
+                 , inInput = [ { name = "projectsWidget", isExposed = True, lineNumber = 5, typeAnnotation = "Widget -> String" } ]
+                 , inInputAndOutput = [ { name = "updatesWidget", isExposed = True, lineNumber = 7, typeAnnotation = "String -> (Widget -> Widget)" } ]
                  , referencedBy = []
                  }
                     |> expectTypeInModule
@@ -131,51 +131,51 @@ suite =
         , testSingleFunctionModule
             "smartWidgetConstructor : String -> Maybe Widget\nsmartWidgetConstructor s = Just { name = s, isCool = True }"
             { emptyFunctions
-                | returnedBy = [ { name = "smartWidgetConstructor", lineNumber = 3, typeAnnotation = "String -> Maybe Widget" } ]
+                | returnedBy = [ { name = "smartWidgetConstructor", isExposed = True, lineNumber = 3, typeAnnotation = "String -> Maybe Widget" } ]
             }
         , testSingleFunctionModule
             "weirdUpdater : { x: String, y: Widget } -> Maybe Widget\nweirdUpdater {y} = Just y"
             { emptyFunctions
-                | updaters = [ { name = "weirdUpdater", lineNumber = 3, typeAnnotation = "{x : String, y : Widget} -> Maybe Widget" } ]
+                | updaters = [ { name = "weirdUpdater", isExposed = True, lineNumber = 3, typeAnnotation = "{x : String, y : Widget} -> Maybe Widget" } ]
             }
         , testSingleFunctionModule
             "weirdThing : { x: String, y: Widget -> Int} -> Maybe Widget\nweirdThing {y} = Just y"
             { emptyFunctions
-                | returnedBy = [ { name = "weirdThing", lineNumber = 3, typeAnnotation = "{x : String, y : Widget -> Int} -> Maybe Widget" } ]
+                | returnedBy = [ { name = "weirdThing", isExposed = True, lineNumber = 3, typeAnnotation = "{x : String, y : Widget -> Int} -> Maybe Widget" } ]
             }
         , testSingleFunctionModule
             "weirdThing : { x: String, y: Widget -> Int} -> String\nweirdThing {x} = x"
             { emptyFunctions
-                | referencedBy = [ { name = "weirdThing", lineNumber = 3, typeAnnotation = "{x : String, y : Widget -> Int} -> String" } ]
+                | referencedBy = [ { name = "weirdThing", isExposed = True, lineNumber = 3, typeAnnotation = "{x : String, y : Widget -> Int} -> String" } ]
             }
         , testSingleFunctionModule
             "proj : Widget -> Int -> Int\nproj w _ = 10"
             { emptyFunctions
-                | projectionsOf = [ { name = "proj", lineNumber = 3, typeAnnotation = "Widget -> (Int -> Int)" } ]
+                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Widget -> (Int -> Int)" } ]
             }
         , testSingleFunctionModule
             "proj : Widget -> Int -> Int -> Int\nproj w _ = 10"
             { emptyFunctions
-                | projectionsOf = [ { name = "proj", lineNumber = 3, typeAnnotation = "Widget -> (Int -> (Int -> Int))" } ]
+                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Widget -> (Int -> (Int -> Int))" } ]
             }
         , testSingleFunctionModule
             "proj : Int -> Widget -> Int\nproj w _ = 10"
             { emptyFunctions
-                | projectionsOf = [ { name = "proj", lineNumber = 3, typeAnnotation = "Int -> (Widget -> Int)" } ]
+                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> (Widget -> Int)" } ]
             }
         , testSingleFunctionModule
             "proj : Int -> Widget -> Int -> Int\nproj w _ = 10"
             { emptyFunctions
-                | projectionsOf = [ { name = "proj", lineNumber = 3, typeAnnotation = "Int -> (Widget -> (Int -> Int))" } ]
+                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> (Widget -> (Int -> Int))" } ]
             }
         , testSingleFunctionModule
             "proj : Int -> Int -> Widget -> Int\nproj w _ = 10"
             { emptyFunctions
-                | projectionsOf = [ { name = "proj", lineNumber = 3, typeAnnotation = "Int -> (Int -> (Widget -> Int))" } ]
+                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> (Int -> (Widget -> Int))" } ]
             }
         , testSingleFunctionModule
             "proj : Int -> (Widget -> Int) -> Int\nproj w _ = 10"
             { emptyFunctions
-                | referencedBy = [ { name = "proj", lineNumber = 3, typeAnnotation = "Int -> ((Widget -> Int) -> Int)" } ]
+                | referencedBy = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> ((Widget -> Int) -> Int)" } ]
             }
         ]

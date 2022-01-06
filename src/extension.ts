@@ -7,6 +7,7 @@ const main = Elm.Main.init();
 
 type FunctionUML = {
     name: string
+    , isExposed: boolean
     , lineNumber: number
     , typeAnnotation: string
 }
@@ -27,7 +28,7 @@ type Node = vscode.TreeItem & { children?: Node[] }
 
 const functionUMLToNode = (iconPath: string) => (functionUML: FunctionUML): Node =>
 ({
-    label: `${functionUML.name} : ${functionUML.typeAnnotation}`,
+    label: `${(functionUML.isExposed) ? '+' : '-'}${functionUML.name} : ${functionUML.typeAnnotation}`,
     iconPath: new vscode.ThemeIcon(iconPath),
     command: {
         command: 'revealLine',

@@ -8,21 +8,27 @@ import TypeRoles exposing (TypeRoles)
 
 type alias Function =
     { name : String
+    , isExposed : Bool
     , typeAnnotation : String
     , lineNumber : Int
     , typeRoles : TypeRoles
     }
 
 
-fromDeclaration : Declaration -> Maybe Function
-fromDeclaration declaration =
+fromDeclaration : (String -> Bool) -> Declaration -> Maybe Function
+fromDeclaration isExposed declaration =
     case declaration of
         FunctionDeclaration { signature } ->
             signature
                 |> Maybe.andThen
                     (\(Node range { name, typeAnnotation }) ->
+                        let
+                            nameString =
+                                Node.value name
+                        in
                         Just
-                            { name = Node.value name
+                            { name = nameString
+                            , isExposed = isExposed nameString
                             , lineNumber = range.start.row
                             , typeAnnotation = typeAnnotation |> Writer.writeTypeAnnotation |> Writer.write
                             , typeRoles = typeAnnotation |> Node.value |> TypeRoles.fromAnnotation
