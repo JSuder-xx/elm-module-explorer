@@ -9,5 +9,5 @@ This is a VS Code extension for Elm that displays how the functions declared in 
 
 ## Todo
 
-- Integration Test isExposed.
 - Organize functions for types not declared in the current module.
+- Display functions missing type signatures AND exposed outside the module.

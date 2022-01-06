@@ -6,9 +6,9 @@ import Test exposing (..)
 import TypeUML exposing (FunctionUML, TypeUML)
 
 
-moduleHeader : String
-moduleHeader =
-    "module MyStuff exposing (..)"
+moduleHeader : String -> String
+moduleHeader expose =
+    "module MyStuff exposing (" ++ expose ++ ")"
 
 
 widgetTypeAliasDeclaration : String
@@ -58,22 +58,22 @@ expectTypeInModule expectedType moduleUML =
             Expect.equal actualType expectedType
 
 
-testSingleFunctionModule : String -> Functions -> Test
-testSingleFunctionModule fnString expectedType =
-    test fnString <|
+testSingleFunctionModule : { givenExposingList : String, andFunctionDeclaration : String, thenFunctions : Functions } -> Test
+testSingleFunctionModule { andFunctionDeclaration, givenExposingList, thenFunctions } =
+    test ("Given exposing " ++ givenExposingList ++ " and function declaration " ++ andFunctionDeclaration) <|
         \_ ->
             successfulModuleParse
-                [ moduleHeader
+                [ moduleHeader givenExposingList
                 , widgetTypeAliasDeclaration
-                , fnString
+                , andFunctionDeclaration
                 ]
                 (expectTypeInModule
                     { name = "Widget"
                     , lineNumber = 2
-                    , inOutput = expectedType.returnedBy
-                    , inInput = expectedType.projectionsOf
-                    , inInputAndOutput = expectedType.updaters
-                    , referencedBy = expectedType.referencedBy
+                    , inOutput = thenFunctions.returnedBy
+                    , inInput = thenFunctions.projectionsOf
+                    , inInputAndOutput = thenFunctions.updaters
+                    , referencedBy = thenFunctions.referencedBy
                     }
                 )
 
@@ -84,7 +84,7 @@ suite =
         [ describe "given only a type declaration and no functions" <|
             let
                 success =
-                    successfulModuleParse [ moduleHeader, widgetTypeAliasDeclaration ]
+                    successfulModuleParse [ moduleHeader "..", widgetTypeAliasDeclaration ]
             in
             [ test "module name is correct" <| always <| success <| \moduleUML -> Expect.equal moduleUML.name "MyStuff"
             , test "there is a single type" <| always <| success <| \moduleUML -> Expect.equal (List.length moduleUML.types) 1
@@ -105,7 +105,7 @@ suite =
             let
                 success fn =
                     successfulModuleParse
-                        [ moduleHeader
+                        [ moduleHeader ".."
                         , widgetTypeAliasDeclaration
                         , "makesWidget : String -> Widget\nmakesWidget s = { name = s, isCool = True }"
                         , "projectsWidget : Widget -> String\nprojectsWidget { name } = name"
@@ -129,53 +129,91 @@ suite =
                 )
             ]
         , testSingleFunctionModule
-            "smartWidgetConstructor : String -> Maybe Widget\nsmartWidgetConstructor s = Just { name = s, isCool = True }"
-            { emptyFunctions
-                | returnedBy = [ { name = "smartWidgetConstructor", isExposed = True, lineNumber = 3, typeAnnotation = "String -> Maybe Widget" } ]
+            { givenExposingList = ".."
+            , andFunctionDeclaration = "smartWidgetConstructor : String -> Maybe Widget\nsmartWidgetConstructor s = Just { name = s, isCool = True }"
+            , thenFunctions =
+                { emptyFunctions
+                    | returnedBy = [ { name = "smartWidgetConstructor", isExposed = True, lineNumber = 3, typeAnnotation = "String -> Maybe Widget" } ]
+                }
             }
         , testSingleFunctionModule
-            "weirdUpdater : { x: String, y: Widget } -> Maybe Widget\nweirdUpdater {y} = Just y"
-            { emptyFunctions
-                | updaters = [ { name = "weirdUpdater", isExposed = True, lineNumber = 3, typeAnnotation = "{x : String, y : Widget} -> Maybe Widget" } ]
+            { givenExposingList = ".."
+            , andFunctionDeclaration = "weirdUpdater : { x: String, y: Widget } -> Maybe Widget\nweirdUpdater {y} = Just y"
+            , thenFunctions =
+                { emptyFunctions
+                    | updaters = [ { name = "weirdUpdater", isExposed = True, lineNumber = 3, typeAnnotation = "{x : String, y : Widget} -> Maybe Widget" } ]
+                }
             }
         , testSingleFunctionModule
-            "weirdThing : { x: String, y: Widget -> Int} -> Maybe Widget\nweirdThing {y} = Just y"
-            { emptyFunctions
-                | returnedBy = [ { name = "weirdThing", isExposed = True, lineNumber = 3, typeAnnotation = "{x : String, y : Widget -> Int} -> Maybe Widget" } ]
+            { givenExposingList = ".."
+            , andFunctionDeclaration = "weirdThing : { x: String, y: Widget -> Int} -> Maybe Widget\nweirdThing {y} = Just y"
+            , thenFunctions =
+                { emptyFunctions
+                    | returnedBy = [ { name = "weirdThing", isExposed = True, lineNumber = 3, typeAnnotation = "{x : String, y : Widget -> Int} -> Maybe Widget" } ]
+                }
             }
         , testSingleFunctionModule
-            "weirdThing : { x: String, y: Widget -> Int} -> String\nweirdThing {x} = x"
-            { emptyFunctions
-                | referencedBy = [ { name = "weirdThing", isExposed = True, lineNumber = 3, typeAnnotation = "{x : String, y : Widget -> Int} -> String" } ]
+            { givenExposingList = ".."
+            , andFunctionDeclaration = "weirdThing : { x: String, y: Widget -> Int} -> String\nweirdThing {x} = x"
+            , thenFunctions =
+                { emptyFunctions
+                    | referencedBy = [ { name = "weirdThing", isExposed = True, lineNumber = 3, typeAnnotation = "{x : String, y : Widget -> Int} -> String" } ]
+                }
             }
         , testSingleFunctionModule
-            "proj : Widget -> Int -> Int\nproj w _ = 10"
-            { emptyFunctions
-                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Widget -> (Int -> Int)" } ]
+            { givenExposingList = ".."
+            , andFunctionDeclaration = "proj : Widget -> Int -> Int\nproj w _ = 10"
+            , thenFunctions =
+                { emptyFunctions
+                    | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Widget -> (Int -> Int)" } ]
+                }
             }
         , testSingleFunctionModule
-            "proj : Widget -> Int -> Int -> Int\nproj w _ = 10"
-            { emptyFunctions
-                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Widget -> (Int -> (Int -> Int))" } ]
+            { givenExposingList = ".."
+            , andFunctionDeclaration = "proj : Widget -> Int -> Int -> Int\nproj w _ = 10"
+            , thenFunctions =
+                { emptyFunctions
+                    | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Widget -> (Int -> (Int -> Int))" } ]
+                }
             }
         , testSingleFunctionModule
-            "proj : Int -> Widget -> Int\nproj w _ = 10"
-            { emptyFunctions
-                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> (Widget -> Int)" } ]
+            { givenExposingList = ".."
+            , andFunctionDeclaration = "proj : Int -> Widget -> Int\nproj w _ = 10"
+            , thenFunctions =
+                { emptyFunctions
+                    | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> (Widget -> Int)" } ]
+                }
             }
         , testSingleFunctionModule
-            "proj : Int -> Widget -> Int -> Int\nproj w _ = 10"
-            { emptyFunctions
-                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> (Widget -> (Int -> Int))" } ]
+            { givenExposingList = ".."
+            , andFunctionDeclaration = "proj : Int -> Widget -> Int -> Int\nproj w _ = 10"
+            , thenFunctions =
+                { emptyFunctions
+                    | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> (Widget -> (Int -> Int))" } ]
+                }
             }
         , testSingleFunctionModule
-            "proj : Int -> Int -> Widget -> Int\nproj w _ = 10"
-            { emptyFunctions
-                | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> (Int -> (Widget -> Int))" } ]
+            { givenExposingList = ".."
+            , andFunctionDeclaration = "proj : Int -> Int -> Widget -> Int\nproj w _ = 10"
+            , thenFunctions =
+                { emptyFunctions
+                    | projectionsOf = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> (Int -> (Widget -> Int))" } ]
+                }
             }
         , testSingleFunctionModule
-            "proj : Int -> (Widget -> Int) -> Int\nproj w _ = 10"
-            { emptyFunctions
-                | referencedBy = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> ((Widget -> Int) -> Int)" } ]
+            { givenExposingList = "Widget"
+            , andFunctionDeclaration = "proj : Int -> (Widget -> Int) -> Int\nproj w _ = 10"
+            , thenFunctions =
+                { emptyFunctions
+                    | referencedBy = [ { name = "proj", isExposed = False, lineNumber = 3, typeAnnotation = "Int -> ((Widget -> Int) -> Int)" } ]
+                }
+            }
+        , testSingleFunctionModule
+            { givenExposingList = "proj"
+            , andFunctionDeclaration = "proj : Int -> (Widget -> Int) -> Int\nproj w _ = 10"
+            , thenFunctions =
+                { emptyFunctions
+                    | referencedBy = [ { name = "proj", isExposed = True, lineNumber = 3, typeAnnotation = "Int -> ((Widget -> Int) -> Int)" } ]
+                }
             }
         ]
