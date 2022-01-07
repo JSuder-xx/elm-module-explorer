@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 
-const Elm = require('./elm-type-explorer.min').Elm;
+const Elm = require('./elm-module-explorer.min').Elm;
 const main = Elm.Main.init();
 
 type FunctionUML = {
@@ -31,7 +31,7 @@ type ModuleUML = {
     , nomads: FunctionUML[]
 }
 
-export const extensionName = 'elmTypeExplorer'
+export const extensionName = 'elmModuleExplorer'
 
 type Node = vscode.TreeItem & { children?: Node[] }
 
@@ -78,7 +78,7 @@ const typeUMLToNode = (typeUML: TypeUML): Node =>
             , ...functionKinds('eye', typeUML.referencedBy)
         ]);
 
-export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
+export class elmModuleExplorerProvider implements vscode.TreeDataProvider<Node> {
 
     private readonly _onDidChangeTreeData: vscode.EventEmitter<undefined> = new vscode.EventEmitter<undefined>();
     readonly onDidChangeTreeData: vscode.Event<undefined> = this._onDidChangeTreeData.event;
@@ -169,7 +169,7 @@ export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    const provider = new ElmTypeExplorerProvider(context);
+    const provider = new elmModuleExplorerProvider(context);
     vscode.window.registerTreeDataProvider(extensionName, provider);
     vscode.commands.registerCommand(`${extensionName}.refresh`, () => provider.refresh());
 }

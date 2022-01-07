@@ -1,51 +1,58 @@
 {
-    "name": "elm-type-explorer",
-    "displayName": "Elm Type Explorer",
-    "description": "Visualize functions related to types declared in the current Elm file.",
-    "version": "0.0.1",
+    "name": "elm-module-explorer",
+    "displayName": "Elm Module Explorer",
+    "description": "Visualize functions related to types declared in the current Elm module.",
+    "version": "0.1.0",
 	"author": {
 		"name": "John Suder",
 		"email": "j.j.suder@gmail.com",
 		"url": "https://jsuder-xx.github.io/"
 	},
+	"categories": ["Visualization"],
+	"keywords": ["elm", "module", "types", "explore", "visualize"],
     "engines": {
         "vscode": "^1.42.0"
     },
+	"icon": "images/elm.png",
 	"activationEvents": [
-		"onView:elmTypeExplorer",
+		"onView:elmModuleExplorer",
         "onLanguage:elm"
-    ],        	
+    ],  
+	"repository": {
+        "type": "git",
+        "url": "https://github.com/JSuder-xx/elm-module-explorer.git"
+    },	      	
 	"main": "./out/extension.js",
 	"contributes": {
 		"views": {
 			"explorer": [
 				{
-					"id": "elmTypeExplorer",
-					"name": "Elm Type Explorer",
-					"when": "elmTypeExplorerEnabled"
+					"id": "elmModuleExplorer",
+					"name": "Elm Module Explorer",
+					"when": "elmModuleExplorerEnabled"
 				}
 			]
 		},
 		"commands": [
 			{
-				"command": "elmTypeExplorer.refresh",
+				"command": "elmModuleExplorer.refresh",
 				"title": "Refresh"
 			}
 		],
 		"menus": {
 			"view/title": [
 				{
-					"command": "elmTypeExplorer.refresh",
-					"when": "view == elmTypeExplorer",
+					"command": "elmModuleExplorer.refresh",
+					"when": "view == elmModuleExplorer",
 					"group": "navigation"
 				}
 			]
 		},
 		"configuration": [
 			{
-				"title": "Elm Type Explorer",
+				"title": "Elm Module Explorer",
 				"properties": {
-					"elmTypeExplorer.autorefresh": {
+					"elmModuleExplorer.autorefresh": {
 						"type": "boolean",
 						"default": true
 					}
