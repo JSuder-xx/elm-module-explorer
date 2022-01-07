@@ -8,6 +8,7 @@
 		"email": "j.j.suder@gmail.com",
 		"url": "https://jsuder-xx.github.io/"
 	},
+	"publisher": "jjsuder",
 	"categories": ["Visualization"],
 	"keywords": ["elm", "module", "types", "explore", "visualize"],
     "engines": {
