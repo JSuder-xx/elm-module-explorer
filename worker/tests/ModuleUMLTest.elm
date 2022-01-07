@@ -226,10 +226,6 @@ suite =
                 }
             ]
         , describe "given a module declaring no types" <|
-            let
-                y =
-                    10
-            in
             [ test "with no functions returns no nomads" <|
                 always <|
                     successfulModuleParse
