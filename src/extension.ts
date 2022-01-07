@@ -62,7 +62,6 @@ const functionUMLToNode = (iconPath: string) => (functionUML: FunctionUML): Node
 const functionKinds = (icon: string, functionUMLList: FunctionUML[]): Node[] =>
     functionUMLList.sort(functionUMLByLineNumberAscending).map(functionUMLToNode(icon));
 
-
 const typeHasChildren = (typeUML: TypeUML): boolean =>
     typeUML.inOutput.length > 0
     || typeUML.inInputAndOutput.length > 0
@@ -85,16 +84,16 @@ export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
     readonly onDidChangeTreeData: vscode.Event<undefined> = this._onDidChangeTreeData.event;
 
     private moduleUML: ModuleUML | null = null;
-    private text: string;
-    private editor: vscode.TextEditor;
+    private text: string = "";
+    private editor: vscode.TextEditor | undefined = undefined;
     private autoRefresh = true;
 
     constructor(private _context: vscode.ExtensionContext) {
         vscode.window.onDidChangeActiveTextEditor(() => this.onActiveEditorChanged());
         vscode.workspace.onDidChangeTextDocument(e => this.onDocumentChanged(e));
-        this.autoRefresh = vscode.workspace.getConfiguration(extensionName).get('autorefresh');
+        this.autoRefresh = vscode.workspace.getConfiguration(extensionName).get('autorefresh') ?? true;
         vscode.workspace.onDidChangeConfiguration(() => {
-            this.autoRefresh = vscode.workspace.getConfiguration(extensionName).get('autorefresh');
+            this.autoRefresh = vscode.workspace.getConfiguration(extensionName).get('autorefresh') ?? true;
         });
         main.ports.sendModule.subscribe((module: ModuleUML) => {
             this.moduleUML = module;
@@ -123,7 +122,12 @@ export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
     }
 
     private onDocumentChanged(changeEvent: vscode.TextDocumentChangeEvent): void {
-        if (this.autoRefresh && changeEvent.document.uri.toString() === this.editor.document.uri.toString()) {
+        const { editor } = this;
+        if (!editor) {
+            return;
+        }
+
+        if (this.autoRefresh && changeEvent.document.uri.toString() === editor.document.uri.toString()) {
             this.refresh();
         }
     }
@@ -142,7 +146,7 @@ export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
         const { moduleUML } = this;
         return Promise.resolve(
             element
-                ? element.children
+                ? (element.children ?? [])
                 : (!moduleUML)
                     ? []
                     : [
