@@ -12,6 +12,9 @@ type FunctionUML = {
     , typeAnnotation: string
 }
 
+const functionUMLByLineNumberAscending = (a: FunctionUML, b: FunctionUML) =>
+    a.lineNumber - b.lineNumber;
+
 type TypeUML = {
     name: string
     , lineNumber: number
@@ -20,11 +23,27 @@ type TypeUML = {
     , inInputAndOutput: FunctionUML[]
     , referencedBy: FunctionUML[]
 }
-type ModuleUML = { name: string, types: TypeUML[], missingSignatures: FunctionUML[] }
+
+type ModuleUML = {
+    name: string
+    , types: TypeUML[]
+    , missingSignatures: FunctionUML[]
+    , nomads: FunctionUML[]
+}
 
 export const extensionName = 'elmTypeExplorer'
 
 type Node = vscode.TreeItem & { children?: Node[] }
+
+const parentNode = (label: string, children: Node[]): Node =>
+({
+    label,
+    collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+    children
+});
+
+const conditionalParent = (label: string, children: Node[]): Node[] =>
+    children.length === 0 ? [] : [parentNode(label, children)];
 
 const functionUMLToNode = (iconPath: string) => (functionUML: FunctionUML): Node =>
 ({
@@ -41,7 +60,7 @@ const functionUMLToNode = (iconPath: string) => (functionUML: FunctionUML): Node
 });
 
 const functionKinds = (icon: string, functionUMLList: FunctionUML[]): Node[] =>
-    functionUMLList.map(functionUMLToNode(icon));
+    functionUMLList.sort(functionUMLByLineNumberAscending).map(functionUMLToNode(icon));
 
 
 const typeHasChildren = (typeUML: TypeUML): boolean =>
@@ -51,16 +70,14 @@ const typeHasChildren = (typeUML: TypeUML): boolean =>
     || typeUML.referencedBy.length > 0;
 
 const typeUMLToNode = (typeUML: TypeUML): Node =>
-({
-    label: typeUML.name,
-    collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-    children: [
-        ...functionKinds('arrow-right', typeUML.inOutput),
-        ...functionKinds('arrow-both', typeUML.inInputAndOutput),
-        ...functionKinds('arrow-left', typeUML.inInput),
-        ...functionKinds('eye', typeUML.referencedBy)
-    ]
-});
+    parentNode(
+        typeUML.name,
+        [
+            ...functionKinds('arrow-right', typeUML.inOutput)
+            , ...functionKinds('arrow-both', typeUML.inInputAndOutput)
+            , ...functionKinds('arrow-left', typeUML.inInput)
+            , ...functionKinds('eye', typeUML.referencedBy)
+        ]);
 
 export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
 
@@ -130,12 +147,14 @@ export class ElmTypeExplorerProvider implements vscode.TreeDataProvider<Node> {
                     ? []
                     : [
                         ...moduleUML.types.filter(typeHasChildren).map(typeUMLToNode),
-                        ...moduleUML.missingSignatures.length === 0 ? [] :
-                            [{
-                                label: "NO SIGNATURES",
-                                collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-                                children: moduleUML.missingSignatures.map(functionUMLToNode('circle-slash'))
-                            }]
+                        ...conditionalParent(
+                            "[No Signatures]",
+                            functionKinds('circle-slash', moduleUML.missingSignatures)
+                        ),
+                        ...conditionalParent(
+                            "[Related to Outside Types]",
+                            functionKinds('globe', moduleUML.nomads)
+                        )
                     ]
         );
     }

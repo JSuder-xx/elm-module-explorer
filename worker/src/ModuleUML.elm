@@ -16,6 +16,7 @@ import TypeUML exposing (FunctionUML, TypeUML)
 type alias ModuleUML =
     { name : String
     , types : List TypeUML
+    , nomads : List FunctionUML
     , missingSignatures : List FunctionUML
     }
 
@@ -23,6 +24,7 @@ type alias ModuleUML =
 type alias ModuleUMLState =
     { name : String
     , declaredTypes : Dict String TypeUML
+    , nomads : List FunctionUML
     }
 
 
@@ -32,7 +34,26 @@ addDeclaredFunctionToTypes isExposed (Node _ declaration) moduleState =
         |> Function.fromDeclaration isExposed
         |> Maybe.map
             (\function ->
-                { moduleState | declaredTypes = (function |> TypeUML.addFunction |> Dict.map) moduleState.declaredTypes }
+                let
+                    interim =
+                        moduleState.declaredTypes
+                            |> Dict.map (TypeUML.addFunction function)
+
+                    wasAdded =
+                        interim
+                            |> Dict.values
+                            |> List.map Tuple.second
+                            |> List.foldl (||) False
+                in
+                { moduleState
+                    | declaredTypes = Dict.map (always Tuple.first) interim
+                    , nomads =
+                        if not wasAdded then
+                            TypeUML.functionUMLFromFunction function :: moduleState.nomads
+
+                        else
+                            moduleState.nomads
+                }
             )
         |> Maybe.withDefault moduleState
 
@@ -107,6 +128,7 @@ fromFile { moduleDefinition, declarations } =
         initialModuleState : ModuleUMLState
         initialModuleState =
             { name = moduleDef |> Module.moduleName |> String.join "."
+            , nomads = []
             , declaredTypes =
                 declarations
                     |> List.filterMap typeNameNode
@@ -121,6 +143,7 @@ fromFile { moduleDefinition, declarations } =
     { name = moduleAfterFunctions.name
     , types = Dict.values moduleAfterFunctions.declaredTypes
     , missingSignatures = declarations |> List.filterMap functionWithoutSignature
+    , nomads = moduleAfterFunctions.nomads
     }
 
 

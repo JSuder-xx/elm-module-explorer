@@ -1,4 +1,4 @@
-module TypeUML exposing (FunctionUML, TypeUML, addFunction, init)
+module TypeUML exposing (FunctionUML, TypeUML, addFunction, functionUMLFromFunction, init)
 
 import Elm.Syntax.Range exposing (Range)
 import Function exposing (Function)
@@ -50,29 +50,39 @@ includeReferencedBy f typeUML =
     { typeUML | referencedBy = f :: typeUML.referencedBy }
 
 
-addFunction : Function -> String -> TypeUML -> TypeUML
-addFunction { name, lineNumber, isExposed, typeAnnotation, typeRoles } typeName typeUML =
+functionUMLFromFunction : Function -> FunctionUML
+functionUMLFromFunction { name, lineNumber, isExposed, typeAnnotation } =
+    { name = name, isExposed = isExposed, lineNumber = lineNumber, typeAnnotation = typeAnnotation }
+
+
+addFunction : Function -> String -> TypeUML -> ( TypeUML, Bool )
+addFunction ({ typeRoles } as function) typeName typeUML =
     let
         functionUML =
-            { name = name, isExposed = isExposed, lineNumber = lineNumber, typeAnnotation = typeAnnotation }
+            functionUMLFromFunction function
 
         isMemberOf =
             Set.member typeName
+
+        includeMaybe =
+            if isMemberOf typeRoles.invariantTypes then
+                Just includeUpdaters
+
+            else if isMemberOf typeRoles.outTypes then
+                Just includeReturnedBy
+
+            else if isMemberOf typeRoles.inTypes then
+                Just includeProjectionsOf
+
+            else if isMemberOf typeRoles.referencedTypes then
+                Just includeReferencedBy
+
+            else
+                Nothing
     in
-    (if isMemberOf typeRoles.invariantTypes then
-        Just includeUpdaters
+    case includeMaybe of
+        Just include ->
+            ( include functionUML typeUML, True )
 
-     else if isMemberOf typeRoles.outTypes then
-        Just includeReturnedBy
-
-     else if isMemberOf typeRoles.inTypes then
-        Just includeProjectionsOf
-
-     else if isMemberOf typeRoles.referencedTypes then
-        Just includeReferencedBy
-
-     else
-        Nothing
-    )
-        |> Maybe.map (\include -> include functionUML typeUML)
-        |> Maybe.withDefault typeUML
+        Nothing ->
+            ( typeUML, False )

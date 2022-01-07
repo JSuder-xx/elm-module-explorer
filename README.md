@@ -9,4 +9,4 @@ This is a VS Code extension for Elm that displays how the functions declared in 
 
 ## Todo
 
-- Organize functions for types not declared in the current module.
+- Rename and publish
